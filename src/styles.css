@@ -1277,3 +1277,20 @@ h4 {
   width: 100%;
   line-height: 1.8;
 }
+
+/* Champ date sur iPhone : Safari lui impose une largeur minimale et centre le texte */
+input[type='date'] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  text-align: left;
+}
+input[type='date']::-webkit-date-and-time-value {
+  text-align: left;
+  margin: 0;
+}
+.form label {
+  min-width: 0;
+}
