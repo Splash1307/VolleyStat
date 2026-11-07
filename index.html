@@ -13,7 +13,39 @@
     <title>VolleyStat</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="boot" style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;text-align:center;font-family:system-ui,sans-serif;background:#0b1120;color:#e8eefc">
+        <div style="font-size:48px">🏐</div>
+        <div id="boot-msg">Chargement de VolleyStat…</div>
+      </div>
+    </div>
+    <script>
+      // Écran de secours si l'appli ne démarre pas (ancienne version en cache, erreur…)
+      (function () {
+        function fail(detail) {
+          if (window.__booted) return;
+          var box = document.getElementById('boot-msg');
+          if (!box) return;
+          box.innerHTML =
+            '<p style="margin:0 0 12px">L\u2019appli n\u2019a pas pu démarrer.</p>' +
+            '<button id="boot-reset" style="font:inherit;font-weight:700;padding:14px 20px;border:0;border-radius:12px;background:#facc15;color:#1a1400">Recharger la dernière version</button>' +
+            '<p style="margin:12px 0 0;font-size:13px;opacity:.7">Tes équipes et matchs ne sont pas effacés.</p>' +
+            (detail ? '<p style="margin:12px 0 0;font-size:12px;opacity:.5;word-break:break-word">' + String(detail).replace(/</g, '&lt;') + '</p>' : '');
+          document.getElementById('boot-reset').onclick = function () {
+            var jobs = [];
+            if (navigator.serviceWorker) jobs.push(navigator.serviceWorker.getRegistrations().then(function (rs) { return Promise.all(rs.map(function (r) { return r.unregister(); })); }));
+            if (window.caches) jobs.push(caches.keys().then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k); })); }));
+            Promise.all(jobs).catch(function () {}).then(function () { location.replace(location.pathname + '?v=' + Date.now()); });
+          };
+        }
+        window.addEventListener('error', function (e) {
+          var t = e.target;
+          if (t && (t.tagName === 'SCRIPT' || t.tagName === 'LINK')) fail('Fichier introuvable : ' + (t.src || t.href));
+          else fail(e.message);
+        }, true);
+        setTimeout(function () { fail(''); }, 8000);
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
