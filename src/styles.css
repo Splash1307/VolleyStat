@@ -1187,3 +1187,93 @@ h4 {
     transform: translateY(-30px);
   }
 }
+
+/* --------------------------------- Équipe --------------------------------- */
+.team-hero {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--card2), var(--card));
+  border: 1px solid var(--line);
+}
+.team-badge {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  font-size: 1.3rem;
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.team-hero-text {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.team-hero-text b {
+  font-size: 1.25rem;
+  overflow-wrap: anywhere;
+}
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tag {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--bg2);
+  color: var(--muted);
+  border: 1px solid var(--line);
+  white-space: nowrap;
+}
+.roster {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.roster-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 14px;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--line);
+  text-align: left;
+  min-height: 60px;
+}
+.roster-row:first-child {
+  border-top: 0;
+}
+.roster-row:active {
+  background: var(--card2);
+}
+.roster-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chev {
+  color: var(--muted);
+  font-size: 1.4rem;
+  line-height: 1;
+}
+.empty-btn {
+  background: transparent;
+  width: 100%;
+  line-height: 1.8;
+}

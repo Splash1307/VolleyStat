@@ -38,115 +38,145 @@ export const Teams = () => {
 export const TeamEdit = ({ id }: { id: string }) => {
   const { teams } = useData();
   const existing = teams.find((t) => t.id === id);
-  const [team, setTeam] = useState<Team>(
-    () =>
-      existing ?? {
-        id: uid(),
-        name: '',
-        level: 'Départemental',
-        gender: 'F',
-        players: [],
-        createdAt: Date.now(),
-      },
-  );
-  const [editing, setEditing] = useState<Player | null>(null);
-  const isNew = !existing;
+  if (!existing) return <TeamCreate />;
+  return <TeamView team={existing} />;
+};
 
-  const save = (t: Team) => {
-    setTeam(t);
-    if (!isNew) saveTeam(t);
-  };
+const blankTeam = (): Team => ({
+  id: uid(),
+  name: '',
+  level: 'Départemental',
+  gender: 'F',
+  players: [],
+  createdAt: Date.now(),
+});
 
+/** Champs nom / niveau / catégorie (création et modification) */
+const TeamInfoFields = ({ team, onChange }: { team: Team; onChange: (t: Team) => void }) => (
+  <>
+    <label>
+      Nom de l'équipe
+      <input
+        id="team-name"
+        value={team.name}
+        placeholder="Ex : VC Lyon M18"
+        enterKeyHint="done"
+        onChange={(e) => onChange({ ...team, name: e.target.value })}
+      />
+    </label>
+    <label>
+      Niveau
+      <select id="team-level" value={team.level} onChange={(e) => onChange({ ...team, level: e.target.value })}>
+        {LEVELS.map((l) => (
+          <option key={l}>{l}</option>
+        ))}
+      </select>
+    </label>
+    <div className="field">
+      <span>Catégorie</span>
+      <div className="segmented">
+        {GENDERS.map((g) => (
+          <button
+            type="button"
+            key={g.value}
+            className={team.gender === g.value ? 'active' : ''}
+            onClick={() => onChange({ ...team, gender: g.value as Gender })}
+          >
+            {g.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  </>
+);
+
+const TeamCreate = () => {
+  const [team, setTeam] = useState<Team>(blankTeam);
   const create = () => {
     if (!team.name.trim()) return notify("Donne un nom à l'équipe.");
     saveTeam({ ...team, name: team.name.trim() });
     go(`team/${team.id}`, true);
   };
+  return (
+    <div className="page">
+      <Header title="Nouvelle équipe" back="teams" />
+      <main className="content">
+        <form
+          className="card form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            create();
+          }}
+        >
+          <TeamInfoFields team={team} onChange={setTeam} />
+          <button type="submit" className="btn primary block">
+            Créer l'équipe
+          </button>
+        </form>
+      </main>
+    </div>
+  );
+};
 
+const TeamView = ({ team }: { team: Team }) => {
+  const [editing, setEditing] = useState<Player | null>(null);
+  const [editTeam, setEditTeam] = useState(false);
   const sorted = [...team.players].sort((a, b) => a.number - b.number);
+  const newPlayer = (): Player => ({ id: uid(), name: '', number: -1, poste: '' });
 
   return (
     <div className="page">
-      <Header title={isNew ? 'Nouvelle équipe' : team.name || 'Équipe'} back={isNew ? '' : 'teams'} />
+      <Header
+        title="Équipe"
+        back="teams"
+        right={
+          <button className="btn small" onClick={() => setEditTeam(true)}>
+            ✎ Modifier
+          </button>
+        }
+      />
       <main className="content">
-        <div className="card form">
-          <label>
-            Nom de l'équipe
-            <input
-              value={team.name}
-              placeholder="Ex : VC Lyon M18"
-              onChange={(e) => setTeam({ ...team, name: e.target.value })}
-              onBlur={() => !isNew && team.name.trim() && saveTeam({ ...team, name: team.name.trim() })}
-            />
-          </label>
-          <label>
-            Niveau
-            <select value={team.level} onChange={(e) => save({ ...team, level: e.target.value })}>
-              {LEVELS.map((l) => (
-                <option key={l}>{l}</option>
-              ))}
-            </select>
-          </label>
-          <div className="field">
-            <span>Catégorie</span>
-            <div className="segmented">
-              {GENDERS.map((g) => (
-                <button
-                  key={g.value}
-                  className={team.gender === g.value ? 'active' : ''}
-                  onClick={() => save({ ...team, gender: g.value as Gender })}
-                >
-                  {g.label}
-                </button>
-              ))}
+        <div className="team-hero">
+          <span className="team-badge">{initials(team.name)}</span>
+          <div className="team-hero-text">
+            <b>{team.name}</b>
+            <div className="tags">
+              <span className="tag">{team.level}</span>
+              <span className="tag">{genderLabel(team.gender)}</span>
+              <span className="tag">
+                {team.players.length} joueur{team.players.length > 1 ? 's' : ''}
+              </span>
             </div>
           </div>
-          {isNew && (
-            <button className="btn primary block" onClick={create}>
-              Créer l'équipe
-            </button>
-          )}
         </div>
 
-        {!isNew && (
-          <>
-            <div className="section-head">
-              <h3 className="section-title">Joueurs ({team.players.length})</h3>
-              <button
-                className="btn small primary"
-                onClick={() => setEditing({ id: uid(), name: '', number: -1, poste: '' })}
-              >
-                ＋ Joueur
-              </button>
-            </div>
-            {sorted.length === 0 && <Empty>Ajoute les joueurs de ton équipe avec leur numéro de maillot.</Empty>}
-            <div className="player-list">
-              {sorted.map((p) => (
-                <button key={p.id} className="player-row" onClick={() => setEditing(p)}>
-                  <span className={`jersey sm ${p.poste === 'Libéro' ? 'libero' : ''}`}>{p.number}</span>
-                  <span className="grow">{p.name}</span>
-                  <span className="muted small">{p.poste}</span>
-                </button>
-              ))}
-            </div>
+        <div className="section-head">
+          <h3 className="section-title">Effectif</h3>
+          <button className="btn small primary" onClick={() => setEditing(newPlayer())}>
+            ＋ Joueur
+          </button>
+        </div>
 
-            <div className="btn-row spaced">
-              <button className="btn primary" onClick={() => go(`new-match/${team.id}`)} disabled={team.players.length < 6}>
-                Créer un match avec cette équipe
+        {sorted.length === 0 ? (
+          <button className="empty empty-btn" onClick={() => setEditing(newPlayer())}>
+            Aucun joueur pour l'instant.
+            <br />
+            <b className="link">＋ Ajouter le premier joueur</b>
+          </button>
+        ) : (
+          <div className="roster">
+            {sorted.map((p) => (
+              <button key={p.id} className="roster-row" onClick={() => setEditing(p)}>
+                <span className={`jersey ${p.poste === 'Libéro' ? 'libero' : ''}`}>{p.number}</span>
+                <span className="roster-name">{p.name}</span>
+                {p.poste && <span className="tag">{p.poste}</span>}
+                <span className="chev">›</span>
               </button>
-            </div>
-            <button
-              className="btn danger ghost block"
-              onClick={async () => {
-                if (await ask(`Supprimer l'équipe « ${team.name} » ? Les matchs déjà joués sont conservés.`, { ok: 'Supprimer', danger: true })) {
-                  deleteTeam(team.id);
-                  go('teams', true);
-                }
-              }}
-            >
-              Supprimer l'équipe
-            </button>
-          </>
+            ))}
+          </div>
+        )}
+        {sorted.length > 0 && sorted.length < 6 && (
+          <p className="muted small center">Il faut au moins 6 joueurs pour lancer un match.</p>
         )}
       </main>
 
@@ -157,22 +187,84 @@ export const TeamEdit = ({ id }: { id: string }) => {
           onClose={() => setEditing(null)}
           onSave={(p, another) => {
             const exists = team.players.some((x) => x.id === p.id);
-            save({ ...team, players: exists ? team.players.map((x) => (x.id === p.id ? p : x)) : [...team.players, p] });
-            setEditing(another ? { id: uid(), name: '', number: -1, poste: '' } : null);
+            saveTeam({
+              ...team,
+              players: exists ? team.players.map((x) => (x.id === p.id ? p : x)) : [...team.players, p],
+            });
+            setEditing(another ? newPlayer() : null);
           }}
           onDelete={
             team.players.some((x) => x.id === editing.id)
               ? () => {
-                  save({ ...team, players: team.players.filter((x) => x.id !== editing.id) });
+                  saveTeam({ ...team, players: team.players.filter((x) => x.id !== editing.id) });
                   setEditing(null);
                 }
               : undefined
           }
         />
       )}
+
+      {editTeam && <TeamEditModal team={team} onClose={() => setEditTeam(false)} />}
     </div>
   );
 };
+
+const TeamEditModal = ({ team, onClose }: { team: Team; onClose: () => void }) => {
+  const [t, setT] = useState(team);
+  const valid = !!t.name.trim();
+  const submit = () => {
+    if (!valid) return;
+    saveTeam({ ...t, name: t.name.trim() });
+    onClose();
+  };
+  return (
+    <Modal
+      title="Modifier l'équipe"
+      onClose={onClose}
+      top
+      footer={
+        <button className="btn primary grow" disabled={!valid} onClick={submit}>
+          Enregistrer
+        </button>
+      }
+    >
+      <form
+        className="form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          submit();
+        }}
+      >
+        <TeamInfoFields team={t} onChange={setT} />
+        <button type="submit" hidden />
+      </form>
+      <button
+        className="btn danger ghost block"
+        onClick={async () => {
+          if (
+            await ask(`Supprimer l'équipe « ${team.name} » ? Les matchs déjà joués sont conservés.`, {
+              ok: 'Supprimer',
+              danger: true,
+            })
+          ) {
+            deleteTeam(team.id);
+            go('teams', true);
+          }
+        }}
+      >
+        Supprimer l'équipe
+      </button>
+    </Modal>
+  );
+};
+
+const initials = (name: string) =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase())
+    .join('') || '?';
 
 const PlayerModal = ({
   player,
