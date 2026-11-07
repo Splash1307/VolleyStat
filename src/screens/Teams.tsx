@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Empty, Header, Modal } from '../components/ui';
 import { GENDERS, LEVELS, POSTES, genderLabel } from '../constants';
 import { uid } from '../logic';
@@ -114,7 +114,7 @@ export const TeamEdit = ({ id }: { id: string }) => {
               <h3 className="section-title">Joueurs ({team.players.length})</h3>
               <button
                 className="btn small primary"
-                onClick={() => setEditing({ id: uid(), name: '', number: nextNumber(team.players), poste: '' })}
+                onClick={() => setEditing({ id: uid(), name: '', number: -1, poste: '' })}
               >
                 ＋ Joueur
               </button>
@@ -155,10 +155,10 @@ export const TeamEdit = ({ id }: { id: string }) => {
           player={editing}
           others={team.players.filter((p) => p.id !== editing.id)}
           onClose={() => setEditing(null)}
-          onSave={(p) => {
+          onSave={(p, another) => {
             const exists = team.players.some((x) => x.id === p.id);
             save({ ...team, players: exists ? team.players.map((x) => (x.id === p.id ? p : x)) : [...team.players, p] });
-            setEditing(null);
+            setEditing(another ? { id: uid(), name: '', number: -1, poste: '' } : null);
           }}
           onDelete={
             team.players.some((x) => x.id === editing.id)
@@ -174,13 +174,6 @@ export const TeamEdit = ({ id }: { id: string }) => {
   );
 };
 
-const nextNumber = (players: Player[]) => {
-  const used = new Set(players.map((p) => p.number));
-  let n = 1;
-  while (used.has(n)) n++;
-  return n;
-};
-
 const PlayerModal = ({
   player,
   others,
@@ -191,18 +184,28 @@ const PlayerModal = ({
   player: Player;
   others: Player[];
   onClose: () => void;
-  onSave: (p: Player) => void;
+  onSave: (p: Player, another?: boolean) => void;
   onDelete?: () => void;
 }) => {
   const [p, setP] = useState(player);
-  const [num, setNum] = useState(String(player.number));
+  const [num, setNum] = useState(player.number >= 0 ? String(player.number) : '');
+  const nameRef = useRef<HTMLInputElement>(null);
+  // « Enregistrer + suivant » : on vide le formulaire sans refermer la fenêtre
+  useEffect(() => {
+    setP(player);
+    setNum(player.number >= 0 ? String(player.number) : '');
+    nameRef.current?.focus();
+  }, [player]);
   const n = parseInt(num, 10);
   const dup = others.some((o) => o.number === n);
-  const valid = p.name.trim() && Number.isFinite(n) && n >= 0 && n <= 99 && !dup;
+  const valid = !!p.name.trim() && Number.isFinite(n) && n >= 0 && n <= 99 && !dup;
+  const isNew = !onDelete;
+  const submit = (another?: boolean) => valid && onSave({ ...p, name: p.name.trim(), number: n }, another);
   return (
     <Modal
       title={onDelete ? 'Modifier le joueur' : 'Nouveau joueur'}
       onClose={onClose}
+      top
       footer={
         <>
           {onDelete && (
@@ -210,25 +213,34 @@ const PlayerModal = ({
               Supprimer
             </button>
           )}
-          <button
-            className="btn primary grow"
-            disabled={!valid}
-            onClick={() => onSave({ ...p, name: p.name.trim(), number: n })}
-          >
+          {isNew && (
+            <button className="btn grow" disabled={!valid} onClick={() => submit(true)}>
+              Enregistrer + suivant
+            </button>
+          )}
+          <button className="btn primary grow" disabled={!valid} onClick={() => submit()}>
             Enregistrer
           </button>
         </>
       }
     >
-      <div className="form">
+      <form
+        className="form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          submit(isNew);
+        }}
+      >
         <label>
           Nom / prénom
-          <input autoFocus value={p.name} onChange={(e) => setP({ ...p, name: e.target.value })} />
+          <input ref={nameRef} autoFocus enterKeyHint="next" value={p.name} onChange={(e) => setP({ ...p, name: e.target.value })} />
         </label>
         <label>
           Numéro de maillot
           <input
             inputMode="numeric"
+            enterKeyHint="done"
+            placeholder="Ex : 7"
             value={num}
             onChange={(e) => setNum(e.target.value.replace(/\D/g, '').slice(0, 2))}
           />
@@ -244,7 +256,8 @@ const PlayerModal = ({
             ))}
           </select>
         </label>
-      </div>
+        <button type="submit" hidden />
+      </form>
     </Modal>
   );
 };

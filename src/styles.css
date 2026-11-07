@@ -1167,3 +1167,23 @@ h4 {
     transition: none !important;
   }
 }
+
+/* Fenêtre en haut d'écran : reste visible quand le clavier du téléphone est ouvert */
+.modal-backdrop.top {
+  align-items: flex-start;
+  padding: calc(12px + env(safe-area-inset-top)) 8px 0;
+}
+.modal-backdrop.top .modal {
+  border-radius: 20px;
+  max-height: 70dvh;
+  animation-name: slide-down;
+}
+.modal-backdrop.top .modal-foot {
+  padding-bottom: 12px;
+  flex-wrap: wrap;
+}
+@keyframes slide-down {
+  from {
+    transform: translateY(-30px);
+  }
+}
