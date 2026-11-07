@@ -11,11 +11,9 @@ import {
   addStat,
   addTimeout,
   endMatchNow,
-  getData,
   removePoint,
   substitute,
   undo,
-  updateMatchPlayers,
   updateSettings,
   useData,
   validateSet,
@@ -375,17 +373,14 @@ const SubModal = ({
 }) => {
   const [pos, setPos] = useState<number | null>(initialPos);
   const bench = match.players.filter((p) => !set.lineup.includes(p.id)).sort((a, b) => a.number - b.number);
-  const team = getData().teams.find((t) => t.id === match.teamId);
-  const absents = (team?.players ?? []).filter((p) => !match.players.some((x) => x.id === p.id));
   const out = pos ? playerById(match.players, set.lineup[pos - 1]) : undefined;
 
   const doSub = async (inId: string) => {
     if (!pos || !out) return;
-    const inP = playerById(match.players, inId) ?? absents.find((a) => a.id === inId);
+    const inP = playerById(match.players, inId);
     if (!inP) return;
     const libero = out.poste === 'Libéro' || inP.poste === 'Libéro';
     if (!libero && subsCount >= MAX_SUBS && !(await ask(`Déjà ${subsCount} changements dans ce set. Continuer ?`))) return;
-    if (!match.players.some((p) => p.id === inId)) updateMatchPlayers(match.id, [...match.players, { ...inP }]);
     substitute(match.id, pos, inId, libero);
     onDone(`${libero ? 'Libéro' : 'Changement'} : ${playerLabel(inP)} ↔ ${playerLabel(out)}`);
   };
@@ -400,20 +395,13 @@ const SubModal = ({
             Changements : {subsCount}/{MAX_SUBS} (les remplacements libéro ne comptent pas)
           </p>
           <h4>Qui entre ?</h4>
-          {bench.length === 0 && absents.length === 0 && <p className="muted">Personne sur le banc.</p>}
+          {bench.length === 0 && <p className="muted">Personne sur le banc.</p>}
           <div className="player-list">
             {bench.map((p) => (
               <button key={p.id} className="player-row" onClick={() => doSub(p.id)}>
                 <span className={`jersey sm ${p.poste === 'Libéro' ? 'libero' : ''}`}>{p.number}</span>
                 <span className="grow">{p.name}</span>
                 <span className="muted small">{p.poste}</span>
-              </button>
-            ))}
-            {absents.map((p) => (
-              <button key={p.id} className="player-row" onClick={() => doSub(p.id)}>
-                <span className="jersey sm">{p.number}</span>
-                <span className="grow">{p.name}</span>
-                <span className="muted small">arrivé en retard</span>
               </button>
             ))}
           </div>
