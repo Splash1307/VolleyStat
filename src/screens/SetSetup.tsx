@@ -97,18 +97,20 @@ export const SetSetup = ({ match }: { match: Match }) => {
       {picking !== null && (
         <Modal title={`Poste ${picking}`} onClose={() => setPicking(null)}>
           <div className="player-list">
-            {players.map((p) => {
+            {[...players]
+              .sort((a, b) => Number(lineup.includes(a.id)) - Number(lineup.includes(b.id)))
+              .map((p) => {
               const at = lineup.indexOf(p.id);
               return (
                 <button
                   key={p.id}
-                  className={`player-row ${at === picking - 1 ? 'on' : ''}`}
+                  className={`player-row ${at === picking - 1 ? 'on' : at >= 0 ? 'placed' : ''}`}
                   onClick={() => assign(picking, p.id)}
                 >
                   <span className={`jersey sm ${p.poste === 'Libéro' ? 'libero' : ''}`}>{p.number}</span>
                   <span className="grow">{p.name}</span>
                   <span className="muted small">
-                    {at >= 0 ? `en P${at + 1}` : p.poste}
+                    {at === picking - 1 ? 'ici' : at >= 0 ? `déjà en P${at + 1} · échanger` : p.poste}
                   </span>
                 </button>
               );

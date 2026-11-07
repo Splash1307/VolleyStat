@@ -1294,3 +1294,14 @@ input[type='date']::-webkit-date-and-time-value {
 .form label {
   min-width: 0;
 }
+
+/* Joueur déjà placé sur le terrain : grisé avec un liseré rouge, mais toujours sélectionnable (échange) */
+.player-row.placed {
+  opacity: 0.5;
+  border-color: color-mix(in srgb, var(--faute) 55%, var(--line));
+  background: color-mix(in srgb, var(--faute) 10%, var(--card));
+}
+.player-row.placed .muted {
+  color: var(--faute);
+  opacity: 1;
+}
