@@ -3,6 +3,7 @@ import { Empty, Header } from '../components/ui';
 import { genderLabel } from '../constants';
 import { formatDate, formatDuration, longestRun, playerById, playerLabel, setsWon } from '../logic';
 import { go } from '../router';
+import { ask } from '../dialog';
 import { deleteMatch, useData } from '../store';
 
 export const MatchDetail = ({ id }: { id: string }) => {
@@ -116,8 +117,8 @@ export const MatchDetail = ({ id }: { id: string }) => {
 
         <button
           className="btn danger ghost block"
-          onClick={() => {
-            if (confirm('Supprimer définitivement ce match et ses stats ?')) {
+          onClick={async () => {
+            if (await ask('Supprimer définitivement ce match et ses stats ?', { ok: 'Supprimer', danger: true })) {
               deleteMatch(m.id);
               go('history', true);
             }

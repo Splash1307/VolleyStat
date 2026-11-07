@@ -1125,3 +1125,40 @@ h4 {
     font-size: 3.6rem;
   }
 }
+
+.center-dialog {
+  align-items: center;
+  padding: 16px;
+  z-index: 60;
+}
+.dialog {
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 20px 16px 16px;
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: pop-in 0.15s ease-out;
+}
+.dialog p {
+  margin: 0;
+  font-size: 1.02rem;
+  line-height: 1.45;
+}
+@keyframes pop-in {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

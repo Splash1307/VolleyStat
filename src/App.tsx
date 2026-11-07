@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { DialogHost } from './dialog';
 import { currentSet } from './logic';
 import { go, useRoute } from './router';
 import { useData } from './store';
@@ -23,7 +24,7 @@ const MatchScreen = ({ id }: { id: string }) => {
   return <SetSetup key={m.sets.length} match={m} />;
 };
 
-export const App = () => {
+const Screen = () => {
   const r = useRoute();
   switch (r.name) {
     case 'teams':
@@ -42,3 +43,10 @@ export const App = () => {
       return <Home />;
   }
 };
+
+export const App = () => (
+  <>
+    <Screen />
+    <DialogHost />
+  </>
+);

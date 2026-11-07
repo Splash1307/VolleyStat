@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Empty, Header, Modal } from '../components/ui';
 import { GENDERS, LEVELS, POSTES, genderLabel } from '../constants';
 import { uid } from '../logic';
+import { ask, notify } from '../dialog';
 import { go } from '../router';
 import { deleteTeam, saveTeam, useData } from '../store';
 import type { Gender, Player, Poste, Team } from '../types';
@@ -57,7 +58,7 @@ export const TeamEdit = ({ id }: { id: string }) => {
   };
 
   const create = () => {
-    if (!team.name.trim()) return alert("Donne un nom à l'équipe");
+    if (!team.name.trim()) return notify("Donne un nom à l'équipe.");
     saveTeam({ ...team, name: team.name.trim() });
     go(`team/${team.id}`, true);
   };
@@ -136,8 +137,8 @@ export const TeamEdit = ({ id }: { id: string }) => {
             </div>
             <button
               className="btn danger ghost block"
-              onClick={() => {
-                if (confirm(`Supprimer l'équipe « ${team.name} » ? (les matchs déjà joués sont conservés)`)) {
+              onClick={async () => {
+                if (await ask(`Supprimer l'équipe « ${team.name} » ? Les matchs déjà joués sont conservés.`, { ok: 'Supprimer', danger: true })) {
                   deleteTeam(team.id);
                   go('teams', true);
                 }
@@ -205,7 +206,7 @@ const PlayerModal = ({
       footer={
         <>
           {onDelete && (
-            <button className="btn danger ghost" onClick={() => confirm('Supprimer ce joueur ?') && onDelete()}>
+            <button className="btn danger ghost" onClick={async () => (await ask('Supprimer ce joueur ?', { ok: 'Supprimer', danger: true })) && onDelete()}>
               Supprimer
             </button>
           )}

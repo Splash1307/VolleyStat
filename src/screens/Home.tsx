@@ -3,6 +3,7 @@ import { Header } from '../components/ui';
 import { genderLabel } from '../constants';
 import { setsWon } from '../logic';
 import { go } from '../router';
+import { ask, notify } from '../dialog';
 import { exportData, importData, useData } from '../store';
 
 export const Home = () => {
@@ -23,11 +24,11 @@ export const Home = () => {
   const doImport = async (f: File) => {
     try {
       const txt = await f.text();
-      if (!confirm('Remplacer toutes les données actuelles par cette sauvegarde ?')) return;
+      if (!(await ask('Remplacer toutes les données actuelles par cette sauvegarde ?', { ok: 'Remplacer', danger: true }))) return;
       importData(txt);
-      alert('Sauvegarde importée ✅');
+      notify('Sauvegarde importée ✅');
     } catch (e) {
-      alert('Import impossible : ' + (e as Error).message);
+      notify('Import impossible : ' + (e as Error).message);
     }
   };
 

@@ -4,6 +4,7 @@ import { StatsView } from '../components/StatsView';
 import { Modal, Segmented } from '../components/ui';
 import { CATEGORIES, MAX_SUBS, MAX_TIMEOUTS, STAT_TYPES, statType } from '../constants';
 import { aggregateStats, playerById, playerLabel, pointsToWin, setOverWinner, setsWon } from '../logic';
+import { ask } from '../dialog';
 import { go } from '../router';
 import {
   addPoint,
@@ -51,9 +52,9 @@ export const Live = ({ match, set }: { match: Match; set: SetRecord }) => {
     return () => clearTimeout(t);
   }, [toast]);
 
-  const takeTimeout = (side: Side) => {
+  const takeTimeout = async (side: Side) => {
     const used = side === 'us' ? usTO : themTO;
-    if (used >= MAX_TIMEOUTS && !confirm(`Déjà ${used} temps morts pris dans ce set. En noter un de plus ?`)) return;
+    if (used >= MAX_TIMEOUTS && !(await ask(`Déjà ${used} temps morts pris dans ce set. En noter un de plus ?`))) return;
     addTimeout(match.id, side);
     setTimeoutSide(side);
   };
@@ -215,8 +216,9 @@ export const Live = ({ match, set }: { match: Match; set: SetRecord }) => {
           </button>
           <button
             className="btn danger block"
-            onClick={() => {
-              if (confirm('Arrêter le match maintenant et l’enregistrer tel quel ?')) {
+            onClick={async () => {
+              setMenu(false);
+              if (await ask('Arrêter le match maintenant et l’enregistrer tel quel ?', { ok: 'Terminer', danger: true })) {
                 endMatchNow(match.id);
                 go(`detail/${match.id}`, true);
               }
@@ -377,12 +379,12 @@ const SubModal = ({
   const absents = (team?.players ?? []).filter((p) => !match.players.some((x) => x.id === p.id));
   const out = pos ? playerById(match.players, set.lineup[pos - 1]) : undefined;
 
-  const doSub = (inId: string) => {
+  const doSub = async (inId: string) => {
     if (!pos || !out) return;
     const inP = playerById(match.players, inId) ?? absents.find((a) => a.id === inId);
     if (!inP) return;
     const libero = out.poste === 'Libéro' || inP.poste === 'Libéro';
-    if (!libero && subsCount >= MAX_SUBS && !confirm(`Déjà ${subsCount} changements dans ce set. Continuer ?`)) return;
+    if (!libero && subsCount >= MAX_SUBS && !(await ask(`Déjà ${subsCount} changements dans ce set. Continuer ?`))) return;
     if (!match.players.some((p) => p.id === inId)) updateMatchPlayers(match.id, [...match.players, { ...inP }]);
     substitute(match.id, pos, inId, libero);
     onDone(`${libero ? 'Libéro' : 'Changement'} : ${playerLabel(inP)} ↔ ${playerLabel(out)}`);

@@ -10,7 +10,9 @@ export type Route =
   | { name: 'detail'; id: string };
 
 export const parseHash = (hash: string): Route => {
-  const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean);
+  // format « #nom-id » (compatible avec les liens partagés) ; l'ancien « #/nom/id » reste accepté
+  const raw = hash.replace(/^#\/?/, '');
+  const parts = raw.includes('/') ? raw.split('/').filter(Boolean) : splitFirst(raw);
   switch (parts[0]) {
     case 'teams':
       return { name: 'teams' };
@@ -29,8 +31,15 @@ export const parseHash = (hash: string): Route => {
   }
 };
 
+const splitFirst = (s: string) => {
+  if (s.startsWith('new-match')) return ['new-match', ...(s.length > 10 ? [s.slice(10)] : [])];
+  const i = s.indexOf('-');
+  return i < 0 ? [s] : [s.slice(0, i), s.slice(i + 1)];
+};
+
 export const go = (path: string, replace = false) => {
-  const h = '#/' + path.replace(/^\//, '');
+  const [name, ...rest] = path.replace(/^\//, '').split('/');
+  const h = '#' + (rest.length ? `${name}-${rest.join('-')}` : name || 'home');
   if (replace) history.replaceState(null, '', h);
   else location.hash = h;
   if (replace) window.dispatchEvent(new HashChangeEvent('hashchange'));
