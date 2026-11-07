@@ -27,6 +27,8 @@
 html,
 body {
   margin: 0;
+  touch-action: manipulation; /* pas de zoom au double-tap */
+  -webkit-text-size-adjust: 100%;
   background: var(--bg);
   color: var(--text);
   font-size: 16px;
@@ -40,9 +42,12 @@ button {
   touch-action: manipulation;
 }
 
+/* 16px minimum : sinon l'iPhone zoome quand on touche un champ */
 input,
-select {
+select,
+textarea {
   font: inherit;
+  font-size: 16px !important;
   color: var(--text);
   background: var(--bg2);
   border: 1px solid var(--line);
